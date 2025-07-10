@@ -1,41 +1,53 @@
 package su.taskmanager.controller.user;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.Builder;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import su.taskmanager.controller.security.JwtTokenProvider;
+import su.taskmanager.data.user.dto.LoginRequestDto;
 import su.taskmanager.data.user.dto.read.UserGetDto;
 import su.taskmanager.data.user.entity.User;
 import su.taskmanager.data.user.repository.UserRepository;
 import su.taskmanager.data.user.service.UserService;
-
-import java.util.Optional;
-
+@Builder
 @RestController
 @RequestMapping("api/v1/user")
 public class UserController {
     private final UserService userService;
+    private final JwtTokenProvider jwtTokenProvider;
 
 
-    public UserController(UserService userService,
-                          UserRepository userRepository) {
-        this.userService = userService;
-    }
 
     @GetMapping("/{id}")
     public ResponseEntity<UserGetDto> getUser(@PathVariable Long id) {
-        return userService.findUserById(id)
-                .map(user -> {
-                    UserGetDto dto = new UserGetDto();
-                    dto.setUserId(user.getId());
-                    dto.setUsername(user.getUsername());
-                    dto.setEmail(user.getEmail());
-                    dto.setWorkspaces(user.getWorkspaces());
-                    return ResponseEntity.ok(dto);
-                })
+        return userService.findDtoById(id)
+                .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequest, HttpServletResponse response) {
+        User user = userService.authenticate(loginRequest.getUsername(), loginRequest.getPassword());
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        }
+        String token = jwtTokenProvider.createToken(user.getId(), user.getUsername());
+
+        Cookie cookie = new Cookie("JWT_TOKEN", token);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true); // если используете HTTPS
+        cookie.setPath("/");
+        cookie.setMaxAge(3600); // время жизни в секундах
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok("Logged in");
+    }
+
 
     @PostMapping
-    public User createUser(@RequestBody User user) {
+    public UserGetDto createUser(@RequestBody User user) {
         return userService.saveUser(user);
     }
 

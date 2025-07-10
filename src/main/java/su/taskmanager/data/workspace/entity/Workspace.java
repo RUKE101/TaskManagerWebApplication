@@ -16,22 +16,38 @@ import java.util.List;
 @Builder
 @Entity
 @Table(name="workspace")
-public class Workspace {
+public class Workspace  {
         @Id
         @GeneratedValue(strategy = GenerationType.SEQUENCE)
-        @Column(name="workspace_id")
         private Long id;
-        @ManyToOne
+        @ManyToOne(fetch = FetchType.LAZY)
         @JsonBackReference
-        @JoinColumn(name="user_id")
+        @JoinColumn(name = "author_id", nullable = false)
         private User author;
-        @JsonManagedReference
+        @ManyToMany(mappedBy = "workspaces")
+        private List<User> users = new ArrayList<>();
+
         @Column
         private String nameOfWorkspace;
         @Column
         private String description;
+        @JsonManagedReference(value = "workspace-objectives")
         @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
-        private List<Project> projects = new ArrayList<>();
+        private List<Objective> objectives = new ArrayList<>();
+
+        @JsonManagedReference
+        @OneToMany
+        @JoinColumn(name="workspace")
+        public List<Invite> invites = new ArrayList<>();
 
 
+        public User addUser(User user) {
+                this.users.add(user);
+                return user;
+        }
+
+        public Invite addInvite(Invite invite) {
+                this.invites.add(invite);
+                return invite;
+        }
 }

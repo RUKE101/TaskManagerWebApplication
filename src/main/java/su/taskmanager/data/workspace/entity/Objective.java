@@ -1,11 +1,11 @@
 package su.taskmanager.data.workspace.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
+import su.taskmanager.data.user.entity.User;
 
-import java.util.List;
+import java.time.LocalDateTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -14,19 +14,33 @@ import java.util.List;
 @Builder
 @Entity
 public class Objective {
-    @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    @Column(name="objective_id")
+    @Id
+    @Column
     private Long id;
-    @Column(nullable = false)
-    private String nameOfObjective;
+
+    @Column
+    private String name;
+
     @Column
     private String description;
-    @JsonBackReference
+
+    @JsonBackReference(value = "user-objectives")
     @ManyToOne
-    @JoinColumn(name="project_id")
-    private Project project;
-    @JsonManagedReference
-    @OneToMany(mappedBy = "objective")
-    private List<Task> tasks;
+    @JoinColumn(name="user_id")
+    private User taskHangsOn;
+
+    @Column
+    private LocalDateTime expiryDate;
+
+    @Column
+    private Boolean is_done;
+
+    @JsonBackReference(value = "workspace-objectives")
+    @ManyToOne
+    @JoinColumn(name="workspace_id")
+    private Workspace workspace;
+
+
+
 }

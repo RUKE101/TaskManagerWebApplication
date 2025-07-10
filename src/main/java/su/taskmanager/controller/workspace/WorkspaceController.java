@@ -1,5 +1,6 @@
 package su.taskmanager.controller.workspace;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import su.taskmanager.data.user.service.UserService;
 
 
@@ -22,17 +23,15 @@ public class WorkspaceController {
         this.userService = userService;
     }
     @PostMapping
-    public Workspace createWorkspace(@RequestBody WorkspaceCreateDto dto) {
-        User author = userService.findUserById(dto.getAuthorId())
-                .orElseThrow(() -> new RuntimeException("User not found with id " + dto.getAuthorId()));
+    public WorkspaceCreateDto createWorkspace(@RequestBody WorkspaceCreateDto dto, @AuthenticationPrincipal User user) {
+        User author = user;
         Workspace workspace = new Workspace();
-
-
         workspace.setAuthor(author);
         System.out.println("Author id: " + workspace.getAuthor().getId());
         workspace.setNameOfWorkspace(dto.getNameOfWorkspace());
         workspace.setDescription(dto.getDescription());
-        return workspaceService.createWorkspace(workspace);
+        workspaceService.createWorkspace(workspace);
+        return dto;
     }
 
 }
