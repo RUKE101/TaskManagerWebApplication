@@ -30,7 +30,6 @@ public class UserMapper {
         UserGetDto dto = new UserGetDto();
         dto.setUserId(user.getId());
         dto.setUsername(user.getUsername());
-        dto.setEmail(user.getEmail());
         if (user.getWorkspaces() != null) {
             dto.setWorkspaces(WorkspaceMapper.toDto(user.getWorkspaces()));
         }

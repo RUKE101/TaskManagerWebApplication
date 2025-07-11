@@ -21,6 +21,7 @@ public class UserController {
 
 
 
+
     @GetMapping("/{id}")
     public ResponseEntity<UserGetDto> getUser(@PathVariable Long id) {
         return userService.findDtoById(id)
@@ -47,8 +48,15 @@ public class UserController {
 
 
     @PostMapping
-    public UserGetDto createUser(@RequestBody User user) {
-        return userService.saveUser(user);
+    public ResponseEntity<?> createUser(@RequestBody User user) {
+        if (userService.findByUsername(user.getUsername()).isPresent()) {
+            return ResponseEntity.badRequest().body("User with this username already exists");
+        }
+        userService.saveUser(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Successfully created user");
     }
+
+
+
 
 }

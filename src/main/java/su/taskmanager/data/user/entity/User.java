@@ -26,12 +26,10 @@ public class User {
     @Column(name="user_id")
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String username;
     @Column(nullable = false)
     private String password;
-    @Column
-    private String email;
     @ManyToMany
     @JoinTable(
             name="user_workspace",

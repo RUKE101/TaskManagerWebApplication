@@ -1,10 +1,12 @@
 package su.taskmanager.controller.workspace;
 
 import lombok.Builder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import su.taskmanager.data.user.entity.User;
 import su.taskmanager.data.workspace.dto.create.ObjectiveCreateDto;
 import su.taskmanager.data.workspace.dto.read.ObjectiveDto;
 import su.taskmanager.data.workspace.entity.Objective;
@@ -17,9 +19,8 @@ public class ObjectiveController {
     private final ObjectiveService objectiveService;
 
     @PostMapping
-    ObjectiveDto createObjective(@RequestBody ObjectiveCreateDto dto) {
+    ObjectiveDto createObjective(@RequestBody ObjectiveCreateDto dto, @AuthenticationPrincipal User user) {
         Objective objective = new Objective();
-
 
 
         return objectiveService.createObjective(dto);

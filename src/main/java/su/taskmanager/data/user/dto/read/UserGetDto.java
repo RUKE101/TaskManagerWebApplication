@@ -11,7 +11,6 @@ import java.util.List;
 public class UserGetDto {
     Long userId;
     String username;
-    String email;
     List<WorkspaceDto> workspaces;
 
 }

@@ -51,36 +51,30 @@ public class InviteController {
         return ResponseEntity.ok(invite);
     }
     @PostMapping("/create")
-    public Object inviteCreate(@RequestBody InviteCreateDto dto) {
-        System.out.println("SENDER " + dto.getSender_id());
-        Optional<User> senderOptional = userRepository.findById(dto.getSender_id());
-        if (senderOptional.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<?> inviteCreate(@RequestBody InviteCreateDto dto, @AuthenticationPrincipal User user) {
+
         Optional<Workspace> workspaceOptional = workspaceService.findById(dto.getWorkspace_id());
-        if (senderOptional.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+
         Invite invite = new Invite();
         Workspace workspace = workspaceOptional.get();
-        User sender = senderOptional.get();
-        invite.setSender(sender);
+
+        if (!workspace.getAuthor().getUsername().equals(user.getUsername())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only workspace author allowed to create invites");
+        }
+        invite.setSender(user);
         invite.setWorkspace(workspace);
 
 
-
-
         workspace.addInvite(invite);
-        return inviteService.createInvite(invite);
+        inviteService.createInvite(invite);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+
     }
 
 
 
     @PostMapping("/{uuid}/accept")
-    public ResponseEntity<?> acceptInvitation(@PathVariable UUID uuid) { // , @AuthenticationPrincipal User user) {
-        Long id = Long.parseLong("1");
-        Optional<User> userOptional = userRepository.findById(id);
-        User user = userOptional.get();
+    public ResponseEntity<?> acceptInvitation(@PathVariable UUID uuid, @AuthenticationPrincipal User user) {
     Optional<Invite> inviteOptional = inviteRepository.findByUuid(uuid);
     if (inviteOptional.isEmpty()) {
         return ResponseEntity.notFound().build();
@@ -99,19 +93,21 @@ public class InviteController {
     }
 
     @PostMapping("/{uuid}/decline")
-    public ResponseEntity<?> declineInvitation(@PathVariable UUID uuid) {
+    public ResponseEntity<?> declineInvitation(@PathVariable UUID uuid, @AuthenticationPrincipal User user) {
         Optional<Invite> inviteOptional = inviteRepository.findByUuid(uuid);
         if (inviteOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         Invite invite = inviteOptional.get();
         if (invite.getStatus() != InvitationStatus.PENDING) {
-            return ResponseEntity.status(HttpStatus.GONE).body("Приглашение уже неактуально");
+            return ResponseEntity.status(HttpStatus.GONE).body("Invite expired");
         }
-        invite.setStatus(InvitationStatus.DECLINED);
-        inviteRepository.save(invite);
-        return ResponseEntity.ok("Принято");
+        if (user != null) {
+            invite.setStatus(InvitationStatus.DECLINED);
+            inviteRepository.save(invite);
+            return ResponseEntity.ok("Принято");
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User must be authenticated");
     }
-
 
 }

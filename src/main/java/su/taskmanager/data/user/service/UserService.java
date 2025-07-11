@@ -31,7 +31,7 @@ public class UserService {
     }
 
     public UserGetDto saveUser(User user) {
-        System.out.print(user);
+
         User saved = userRepository.save(user);
         return UserMapper.toDto(saved);
     }
