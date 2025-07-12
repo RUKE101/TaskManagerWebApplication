@@ -4,11 +4,10 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import su.taskmanager.data.user.entity.User;
 import su.taskmanager.data.user.repository.UserRepository;
-import su.taskmanager.data.workspace.entity.Invite;
+import su.taskmanager.data.workspace.dto.read.WorkspaceDto;
 import su.taskmanager.data.workspace.entity.Workspace;
 import su.taskmanager.data.workspace.repository.WorkspaceRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,6 +55,11 @@ public class WorkspaceService {
         return workspaceRepository.findById(id);
     }
 
+    public Workspace updateWorkspace(Workspace workspace, WorkspaceDto dto) {
+        workspace.setNameOfWorkspace(dto.getName());
+        workspace.setDescription(dto.getDescription());
+        return workspaceRepository.save(workspace);
+    }
 }
 
 

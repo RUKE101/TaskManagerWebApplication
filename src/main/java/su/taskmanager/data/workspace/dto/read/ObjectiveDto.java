@@ -9,11 +9,11 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class ObjectiveDto {
+    private Long id;
     private String name;
     private String description;
-    private User hangsOn;
+    private String hangsOn;
     private Boolean is_done;
     private LocalDateTime expiryDate;
-
     private Long workspaceId;
 }
