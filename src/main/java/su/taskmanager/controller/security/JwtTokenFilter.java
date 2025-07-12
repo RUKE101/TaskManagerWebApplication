@@ -11,7 +11,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import su.taskmanager.controller.security.JwtTokenProvider;
 import su.taskmanager.data.user.entity.User;
 import su.taskmanager.data.user.service.UserService;
 

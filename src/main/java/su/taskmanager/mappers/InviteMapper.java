@@ -1,9 +1,7 @@
 package su.taskmanager.mappers;
 
 import su.taskmanager.data.workspace.dto.read.InviteDto;
-import su.taskmanager.data.workspace.dto.read.WorkspaceDto;
 import su.taskmanager.data.workspace.entity.Invite;
-import su.taskmanager.data.workspace.entity.Workspace;
 
 import java.util.List;
 import java.util.stream.Collectors;

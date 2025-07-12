@@ -25,7 +25,7 @@ public class Workspace  {
         @JoinColumn(name = "author_id", nullable = false)
         private User author;
         @ManyToMany(mappedBy = "workspaces")
-        private List<User> users = new ArrayList<>();
+        private final List<User> users = new ArrayList<>();
 
         @Column
         private String nameOfWorkspace;
@@ -33,12 +33,11 @@ public class Workspace  {
         private String description;
         @JsonManagedReference(value = "workspace-objectives")
         @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
-        private List<Objective> objectives = new ArrayList<>();
+        private final List<Objective> objectives = new ArrayList<>();
 
         @JsonManagedReference
-        @OneToMany
-        @JoinColumn(name="workspace")
-        public List<Invite> invites = new ArrayList<>();
+        @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
+        public final List<Invite> invites = new ArrayList<>();
 
 
         public User addUser(User user) {
