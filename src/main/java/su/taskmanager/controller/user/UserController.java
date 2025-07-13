@@ -6,13 +6,13 @@ import lombok.Builder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import su.taskmanager.controller.security.JwtTokenProvider;
 import su.taskmanager.data.user.dto.LoginRequestDto;
 import su.taskmanager.data.user.dto.read.UserGetDto;
 import su.taskmanager.data.user.entity.User;
 import su.taskmanager.data.user.service.UserService;
-import su.taskmanager.mappers.UserMapper;
 
 @Builder
 @RestController
@@ -20,6 +20,7 @@ import su.taskmanager.mappers.UserMapper;
 public class UserController {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final PasswordEncoder passwordEncoder;
 
     @ResponseBody
     @GetMapping
@@ -29,7 +30,6 @@ public class UserController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
 
     }
-
 
     // DEBUG MAPPING/METHOD TODO REMOVE BEFORE PRODUCTION
     @GetMapping("/{id}")
@@ -60,10 +60,10 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<?> createUser(@RequestBody User user) {
-        if (userService.findByUsername(user.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body("User with this username already exists");
+        if (userService.isNameOccupied(user.getUsername())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username with this username already exists");
         }
-        userService.saveUser(user);
+        userService.createUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body("Successfully created user");
     }
 
