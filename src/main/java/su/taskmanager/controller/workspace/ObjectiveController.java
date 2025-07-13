@@ -10,73 +10,64 @@ import su.taskmanager.data.user.service.UserService;
 import su.taskmanager.data.workspace.dto.create.ObjectiveCreateDto;
 import su.taskmanager.data.workspace.dto.read.ObjectiveDto;
 import su.taskmanager.data.workspace.entity.Objective;
-import su.taskmanager.data.workspace.entity.Workspace;
-import su.taskmanager.data.workspace.repository.ObjectiveRepository;
 import su.taskmanager.data.workspace.service.ObjectiveService;
+import su.taskmanager.data.workspace.service.WorkspaceService;
 
-import java.util.Optional;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("api/v1/workspace/project/objective")
 public class ObjectiveController {
     private final ObjectiveService objectiveService;
-    private final ObjectiveRepository objectiveRepository;
     private final UserService userService;
+    private final WorkspaceService workspaceService;
 
 
     @ResponseBody
     @PostMapping
     ResponseEntity<?> createObjective(@RequestBody ObjectiveCreateDto dto, @AuthenticationPrincipal User user) {
         Objective objective = new Objective();
-
-        objectiveService.createObjective(dto);
+        objectiveService.createObjective(dto, user);
         return ResponseEntity.status(HttpStatus.CREATED).body("Successfully created objective");
     }
 
     @ResponseBody
     @PatchMapping("/{objectiveId}")
-    ResponseEntity<ObjectiveDto> updateObjective(@RequestBody ObjectiveDto dto, @AuthenticationPrincipal User user, @PathVariable Long objectiveId) {
-        Optional<Objective> objectiveOptional = objectiveService.findObjectiveById(objectiveId);
-        if (objectiveOptional.isEmpty()) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<?> updateObjective(
+            @RequestBody ObjectiveDto dto,
+            @AuthenticationPrincipal User user,
+            @PathVariable Long objectiveId) {
+
+        Objective objective = objectiveService.getObjectiveById(objectiveId);
+        if (!objectiveService.isUserAuthorized(user, objective)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Not author or task not hanging on you");
         }
-        Objective objective = objectiveOptional.get();
-        if (!user.getUsername().equals(objective.getWorkspace().getAuthor().getUsername())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+
+        if (!workspaceService.isUserInWorkspace(objective.getWorkspace(), user)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You're not member of workspace");
         }
-        if (dto.getHangsOn() != null && !dto.getHangsOn().isBlank()) {
-            Workspace workspace = objective.getWorkspace();
-            Optional<User> hangsOnOptional = userService.findByUsername(dto.getHangsOn());
-            if (hangsOnOptional.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-            User hangsOn = hangsOnOptional.get();
-            boolean userInWorkspace = workspace.getUsers().stream()
-                    .anyMatch(users -> users.getUsername().equals(dto.getHangsOn()));
-            if (!userInWorkspace) {
-                return ResponseEntity.badRequest().build();
-            }
-            objective.setTaskHangsOn(hangsOn);
+        User hangsOn = userService.getUserByUsername(dto.getHangsOn());
+        if (!workspaceService.isUserInWorkspace(objective.getWorkspace(), hangsOn)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("User to assign must be a member of the workspace");
         }
         objectiveService.updateObjective(dto, objective);
-        return ResponseEntity.ok().body(dto);
+        return ResponseEntity.ok(dto);
     }
+
     @ResponseBody
     @DeleteMapping("{objectiveId}")
     ResponseEntity<?> deleteObjective(@PathVariable Long objectiveId, @AuthenticationPrincipal User user) {
-        Optional<Objective> objectiveOptional = objectiveRepository.findById(objectiveId);
-        if (objectiveOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Not found objective with such id");
+        Objective objective = objectiveService.getObjectiveById(objectiveId);
+        if (!workspaceService.isAuthor(objective.getWorkspace(), user)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only author can delete objectives");
         }
-        Objective objective = objectiveOptional.get();
-        if (!objective.getWorkspace().getAuthor().getUsername().equals(user.getUsername())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("Only workspace author can delete objectives in workspace");
-        }
-        objectiveRepository.delete(objective);
+        objectiveService.delete(objective);
         return ResponseEntity.status(HttpStatus.OK)
                 .body("Successfully deleted");
     }
+
 }
+
+
+
