@@ -18,6 +18,11 @@ repositories {
 }
 
 dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+	implementation 'cglib:cglib:2.2.2'
+	implementation 'redis.clients:jedis:2.0.0'
 
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.apache.commons:commons-lang3:3.12.0'
@@ -29,6 +34,7 @@ dependencies {
 	implementation 'javax.servlet:jstl:1.2'
 	implementation 'org.apache.tomcat.embed:tomcat-embed-jasper:9.0.27'
 
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.0'
 	implementation 'org.postgresql:postgresql:42.6.0'
 
 	compileOnly 'org.projectlombok:lombok:1.18.38'
