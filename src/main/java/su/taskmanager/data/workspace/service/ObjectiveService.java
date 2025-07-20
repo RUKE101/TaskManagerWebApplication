@@ -2,6 +2,7 @@ package su.taskmanager.data.workspace.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.Builder;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import su.taskmanager.data.user.entity.User;
@@ -15,16 +16,21 @@ import su.taskmanager.data.workspace.repository.WorkspaceRepository;
 import su.taskmanager.mappers.ObjectiveMapper;
 
 import org.springframework.security.access.AccessDeniedException;
+
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Builder
 @Service
 public class ObjectiveService {
+
+
     private final ObjectiveRepository objectiveRepository;
     private final WorkspaceRepository workspaceRepository;
     private final UserService userService;
 
     @Transactional
+    @CachePut(value = "users", key = "#user.id")
     public ObjectiveDto createObjective(ObjectiveCreateDto dto, User user) {
         Objective objective = new Objective();
         Long workspaceId = dto.getWorkspaceId();
@@ -43,6 +49,36 @@ public class ObjectiveService {
         return ObjectiveMapper.toDto(saved);
     }
 
+
+    @Transactional
+    public ObjectiveDto updateObjective(ObjectiveDto dto, Objective objective) {
+        if (!dto.getHangsOn().isBlank()) {
+            User hangsOn = userService.getUserByUsername(dto.getHangsOn());
+            objective.setTaskHangsOn(hangsOn);
+        }
+        objective.setName(dto.getName());
+        objective.setExpiryDate(LocalDateTime.parse(dto.getExpiryDate()));
+        objective.setDescription(dto.getDescription());
+        objective.setIs_done(dto.getIs_done());
+
+        return ObjectiveMapper.toDto(objectiveRepository.save(objective));
+    }
+
+    @Transactional
+    public void deleteObjectiveById(Long id) {
+        objectiveRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void delete(Objective objective) {
+        objectiveRepository.delete(objective);
+    }
+
+
+    public ObjectiveDto getObjectiveDtoById(Long id) {
+        Objective objective = getObjectiveById(id);
+        return ObjectiveMapper.toDto(objective);
+    }
     public Objective getObjectiveById(Long id) {
         Optional<Objective> objectiveOptional = findObjectiveById(id);
         if (objectiveOptional.isEmpty()) {
@@ -53,24 +89,6 @@ public class ObjectiveService {
 
     public Optional<Objective> findObjectiveById(Long id) {
         return objectiveRepository.findById(id);
-    }
-
-    @Transactional
-    public Objective updateObjective(ObjectiveDto dto, Objective objective) {
-        if (!dto.getHangsOn().isBlank()) {
-            User hangsOn = userService.getUserByUsername(dto.getHangsOn());
-            objective.setTaskHangsOn(hangsOn);
-        }
-        objective.setName(dto.getName());
-        objective.setExpiryDate(dto.getExpiryDate());
-        objective.setDescription(dto.getDescription());
-        objective.setIs_done(dto.getIs_done());
-        return objectiveRepository.save(objective);
-    }
-
-    @Transactional
-    public void deleteObjectiveById(Long id) {
-        objectiveRepository.deleteById(id);
     }
 
     public boolean isUserAuthorized(User user, Objective objective) {
@@ -86,9 +104,4 @@ public class ObjectiveService {
         return isAuthor || isTaskHangsOn;
     }
 
-
-
-    public void delete(Objective objective) {
-        objectiveRepository.delete(objective);
-    }
 }

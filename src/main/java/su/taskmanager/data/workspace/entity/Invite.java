@@ -6,6 +6,7 @@ import lombok.*;
 import su.taskmanager.data.user.entity.User;
 import su.taskmanager.data.workspace.InvitationStatus;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 @Getter
@@ -14,7 +15,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @Entity
-public class Invite {
+@Table(name="invite")
+public class Invite implements Serializable {
     @Id
     @Column
     @GeneratedValue(strategy = GenerationType.SEQUENCE)

@@ -3,7 +3,7 @@ package su.taskmanager.controller.workspace;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.*;
 import su.taskmanager.data.user.entity.User;
 import su.taskmanager.data.user.service.UserService;
@@ -38,23 +38,19 @@ public class InviteController {
     public ResponseEntity<?> inviteCreate(@RequestBody InviteCreateDto dto, @AuthenticationPrincipal User user) {
 
         Workspace workspace = workspaceService.getWorkspace(dto.getWorkspace_id());
-        if (!workspaceService.isAuthor(workspace, user)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only workspace author allowed to create invites");
-        }
-
+        isAuthor(workspace, user);
         Invite invite  = inviteService.createInvite(workspace, user);
         return ResponseEntity.status(HttpStatus.CREATED).body("Successfully created invite with UUID: "
                 + invite.getUuid());
     }
 
-    @Transactional
     @ResponseBody
     @PostMapping("/{uuid}/accept")
     public ResponseEntity<?> acceptInvitation(@PathVariable UUID uuid, @AuthenticationPrincipal User user) {
     Invite invite = inviteService.findInviteByUuid(uuid);
     isExpired(invite);
-    if (invite.getWorkspace().getUsers().stream()
-            .anyMatch(existingUser -> existingUser.getUsername().equals(user.getUsername()))) {
+    Workspace workspace = workspaceService.getWorkspace(invite.getWorkspace().getId());
+    if (workspaceService.isUserInWorkspace(workspace, user)) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body("User already exists in the workspace");
     }
@@ -79,6 +75,15 @@ public class InviteController {
         invite.setStatus(InvitationStatus.DECLINED);
         inviteService.save(invite);
         return ResponseEntity.ok("Declined successfully");
+    }
+
+    @DeleteMapping("{uuid}/delete")
+    public ResponseEntity<?> deleteInvitation(@PathVariable UUID uuid, @AuthenticationPrincipal User user) {
+        Invite invite = inviteService.findInviteByUuid(uuid);
+        Workspace workspace = workspaceService.getWorkspace(invite.getWorkspace().getId());
+        isAuthor(workspace, user);
+        inviteService.deleteInvite(uuid);
+        return ResponseEntity.status(HttpStatus.OK).body("Successfully deleted invitation");
 
     }
 
@@ -87,5 +92,12 @@ public class InviteController {
             throw new RuntimeException("Invite expired");
         }
         else return false;
+    }
+
+    public Boolean isAuthor(Workspace workspace, User user) {
+        if (!workspaceService.isAuthor(workspace, user)) {
+            throw new AccessDeniedException("Only author can change workspace properties");
+        }
+        return true;
     }
 }

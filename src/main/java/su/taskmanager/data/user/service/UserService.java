@@ -2,12 +2,15 @@ package su.taskmanager.data.user.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import su.taskmanager.data.user.dto.read.UserGetDto;
+import su.taskmanager.data.user.dto.read.UserDto;
+import su.taskmanager.data.user.dto.read.UserUpdateDto;
 import su.taskmanager.data.user.entity.User;
 import su.taskmanager.data.user.repository.UserRepository;
 import su.taskmanager.mappers.UserMapper;
@@ -22,12 +25,34 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public UserGetDto createUser(User user) {
+    public UserDto createUser(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         User saved = userRepository.save(user);
+
         return UserMapper.toDto(saved);
     }
 
+    @Transactional
+    @CacheEvict(value = "users", key = "#user.id")
+    public UserDto updateUser(User user, UserUpdateDto newData) {
+        if (newData.getUsername() != null) {
+            if (!isNameOccupied(newData.getUsername())) {
+                user.setUsername(newData.getUsername());
+            }
+            else {
+                throw new RuntimeException("User with this username already exists");
+            }
+        }
+        if (newData.getPassword() != null) {
+            if (!user.getPassword().equals(passwordEncoder.encode(newData.getPassword()))) {
+                user.setPassword(passwordEncoder.encode(newData.getPassword()));
+            }
+
+        }
+        return UserMapper.toDto(userRepository.save(user));
+    }
+
+    @CacheEvict(value = "users", key = "#user.id")
     @Transactional
     public void save(User user) {
         userRepository.save(user);
@@ -36,7 +61,7 @@ public class UserService {
     public Collection<? extends GrantedAuthority> getAuthorities(User user) {
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
-
+    @Cacheable(value = "users", key = "#username")
     public User getUserByUsername(String username) {
         Optional<User> optionalUser = findByUsername(username);
         if (optionalUser.isEmpty()) {
@@ -45,6 +70,7 @@ public class UserService {
         return optionalUser.get();
     }
 
+    @Cacheable(value = "users", key = "#id")
     public User getUserById(Long id) {
         Optional<User> optionalUser = findUserById(id);
         if (optionalUser.isEmpty()) {
@@ -53,11 +79,18 @@ public class UserService {
         return optionalUser.get();
     }
 
+    @Cacheable(value = "usersDto", key = "#id")
+    public UserDto getUserDtoById(Long id) {
+        return userRepository.findById(id)
+                .map(UserMapper::toDto)
+                .orElseThrow(() -> new EntityNotFoundException("Not found user with id: " + id));
+    }
+
     public Optional<User> findUserById(Long id) {
         return userRepository.findById(id);
     }
 
-    public Optional<UserGetDto> findDtoById(Long id) {
+    public Optional<UserDto> findDtoById(Long id) {
         return userRepository.findById(id)
                 .map(UserMapper::toDto);
     }

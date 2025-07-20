@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import su.taskmanager.data.user.entity.User;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,11 +17,11 @@ import java.util.List;
 @Builder
 @Entity
 @Table(name="workspace")
-public class Workspace  {
+public class Workspace implements Serializable {
         @Id
         @GeneratedValue(strategy = GenerationType.SEQUENCE)
         private Long id;
-        @ManyToOne(fetch = FetchType.LAZY)
+        @ManyToOne(fetch = FetchType.EAGER)
         @JsonBackReference
         @JoinColumn(name = "author_id", nullable = false)
         private User author;
@@ -45,8 +46,16 @@ public class Workspace  {
                 return user;
         }
 
+        public void removeUser(User user) {
+                this.users.remove(user);
+        }
+
         public Invite addInvite(Invite invite) {
                 this.invites.add(invite);
                 return invite;
+        }
+
+        public void removeInvite(Invite invite) {
+                this.invites.remove(invite);
         }
 }

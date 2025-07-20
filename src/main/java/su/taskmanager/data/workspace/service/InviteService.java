@@ -15,6 +15,7 @@ import java.util.UUID;
 @Service
 public class InviteService {
     private final InviteRepository inviteRepository;
+    private final WorkspaceService workspaceService;
 
     @Transactional
     public Invite createInvite(Workspace workspace, User user) {
@@ -31,6 +32,15 @@ public class InviteService {
     }
 
     @Transactional
+    public void deleteInvite(UUID inviteUuid) {
+        Invite invite = findInviteByUuid(inviteUuid);
+        Workspace workspace = workspaceService.getWorkspace(invite.getWorkspace().getId());
+        workspace.removeInvite(invite);
+        workspaceService.save(workspace);
+        inviteRepository.delete(invite);
+    }
+
+
     public Invite findInviteByUuid(UUID uuid) {
         return inviteRepository.findByUuid(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("Not found invite with uuid: " + uuid));

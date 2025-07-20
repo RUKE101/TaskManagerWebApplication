@@ -27,8 +27,8 @@ public class ObjectiveController {
     @PostMapping
     ResponseEntity<?> createObjective(@RequestBody ObjectiveCreateDto dto, @AuthenticationPrincipal User user) {
         Objective objective = new Objective();
-        objectiveService.createObjective(dto, user);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Successfully created objective");
+        ObjectiveDto response = objectiveService.createObjective(dto, user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @ResponseBody
@@ -51,8 +51,8 @@ public class ObjectiveController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("User to assign must be a member of the workspace");
         }
-        objectiveService.updateObjective(dto, objective);
-        return ResponseEntity.ok(dto);
+        ObjectiveDto response = objectiveService.updateObjective(dto, objective);
+        return ResponseEntity.ok(response);
     }
 
     @ResponseBody

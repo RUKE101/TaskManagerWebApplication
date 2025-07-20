@@ -1,4 +1,4 @@
-package su.taskmanager.controller.security;
+package su.taskmanager.config;
 
 import lombok.Builder;
 import org.springframework.context.annotation.Bean;

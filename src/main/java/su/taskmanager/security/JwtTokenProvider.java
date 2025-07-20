@@ -1,4 +1,4 @@
-package su.taskmanager.controller.security;
+package su.taskmanager.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;

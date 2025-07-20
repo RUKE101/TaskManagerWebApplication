@@ -15,12 +15,12 @@ public class WorkspaceMapper {
                 .map(WorkspaceMapper::toDto)
                 .collect(Collectors.toList());
 
-    }
+    } 
     public static WorkspaceDto toDto(Workspace workspace) {
         WorkspaceDto dto = new WorkspaceDto();
         dto.setId(workspace.getId());
         dto.setName(workspace.getNameOfWorkspace());
-        dto.setObjectives(workspace.getObjectives());
+        dto.setObjectives(ObjectiveMapper.toDtos(workspace.getObjectives()));
         dto.setDescription(workspace.getDescription());
         dto.setUsers(UserMapper.toWorkspaceDtos(workspace.getUsers()));
 

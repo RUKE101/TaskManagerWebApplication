@@ -1,4 +1,4 @@
-package su.taskmanager.controller.security;
+package su.taskmanager.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

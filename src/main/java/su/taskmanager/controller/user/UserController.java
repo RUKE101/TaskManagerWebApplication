@@ -8,9 +8,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import su.taskmanager.controller.security.JwtTokenProvider;
+import su.taskmanager.data.user.dto.read.UserUpdateDto;
+import su.taskmanager.mappers.UserMapper;
+import su.taskmanager.security.JwtTokenProvider;
 import su.taskmanager.data.user.dto.LoginRequestDto;
-import su.taskmanager.data.user.dto.read.UserGetDto;
+import su.taskmanager.data.user.dto.read.UserDto;
 import su.taskmanager.data.user.entity.User;
 import su.taskmanager.data.user.service.UserService;
 
@@ -22,22 +24,29 @@ public class UserController {
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
 
+
     @ResponseBody
     @GetMapping
     public ResponseEntity<?> getSelf(@AuthenticationPrincipal User user) {
-        return userService.findDtoById(user.getId())
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(userService.getUserDtoById(user.getId()));
 
     }
 
     // DEBUG MAPPING/METHOD TODO REMOVE BEFORE PRODUCTION
     @GetMapping("/{id}")
-    public ResponseEntity<UserGetDto> getUser(@PathVariable Long id) {
+    public ResponseEntity<UserDto> getUser(@PathVariable Long id) {
         return userService.findDtoById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
+
+    @PatchMapping("/update/{id}")
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @AuthenticationPrincipal User user,
+                                        @RequestBody UserUpdateDto dto) {
+        return ResponseEntity.status(HttpStatus.OK).body(userService.updateUser(user, dto));
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequest, HttpServletResponse response) {
         User user = userService.authenticate(loginRequest.getUsername(), loginRequest.getPassword());
@@ -53,18 +62,17 @@ public class UserController {
         cookie.setPath("/");
         cookie.setMaxAge(3600000);
         response.addCookie(cookie);
-
-        return ResponseEntity.ok("Logged in");
+        UserDto dto = UserMapper.toDto(user);
+        return ResponseEntity.status(HttpStatus.OK).body(dto);
     }
-
 
     @PostMapping
     public ResponseEntity<?> createUser(@RequestBody User user) {
         if (userService.isNameOccupied(user.getUsername())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username with this username already exists");
         }
-        userService.createUser(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body("Successfully created user");
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(user));
     }
 
 

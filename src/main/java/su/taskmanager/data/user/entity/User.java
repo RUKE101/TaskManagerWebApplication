@@ -1,10 +1,12 @@
 package su.taskmanager.data.user.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import su.taskmanager.data.workspace.entity.Workspace;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,8 +17,7 @@ import java.util.List;
 @Getter
 @Entity
 @Table(name="\"user\"")
-
-public class User {
+public class User implements Serializable {
     @Id
     @Column(name="user_id")
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -25,6 +26,7 @@ public class User {
     private String username;
     @Column(nullable = false)
     private String password;
+    @JsonIgnore
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name="user_workspace",
@@ -38,6 +40,10 @@ public class User {
         this.workspaces.add(workspace);
         workspace.getUsers().add(this);
         return workspace;
+    }
+
+    public void removeWorkspace(Workspace workspace) {
+        this.workspaces.remove(workspace);
     }
 
 
