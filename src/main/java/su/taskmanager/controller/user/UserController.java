@@ -33,9 +33,13 @@ public class UserController {
 
     }
 
-    // DEBUG MAPPING/METHOD TODO REMOVE BEFORE PRODUCTION
+    // DEBUG MAPPING/METHOD
     @GetMapping("/{id}")
-    public ResponseEntity<UserDto> getUser(@PathVariable Long id) {
+    public ResponseEntity<?> getUser(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        if (!user.getId().equals(1L))
+        {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Staff only");
+        }
         return userService.findDtoById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
